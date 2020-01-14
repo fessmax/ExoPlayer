@@ -300,7 +300,11 @@ public final class MediaCodecInfo {
       // which may not be widely supported. See https://github.com/google/ExoPlayer/issues/5145.
       return true;
     }
-    for (CodecProfileLevel capabilities : getProfileLevels()) {
+    CodecProfileLevel[] profileList = getProfileLevels();
+    if (profileList.length == 0) {
+      return true;
+    }
+    for (CodecProfileLevel capabilities : profileList) {
       if (capabilities.profile == profile && capabilities.level >= level) {
         return true;
       }

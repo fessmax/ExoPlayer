@@ -1885,7 +1885,7 @@ public abstract class MediaCodecRenderer extends BaseRenderer {
   private static boolean codecNeedsEosPropagationWorkaround(MediaCodecInfo codecInfo) {
     String name = codecInfo.name;
     return (Util.SDK_INT <= 25 && "OMX.rk.video_decoder.avc".equals(name))
-        || (Util.SDK_INT <= 17 && "OMX.allwinner.video.decoder.avc".equals(name))
+        || (Util.SDK_INT <= 17 && ("OMX.allwinner.video.decoder.avc".equals(name)) || "OMX.amlogic.avc.decoder.awesome".equals(name))
         || ("Amazon".equals(Util.MANUFACTURER) && "AFTS".equals(Util.MODEL) && codecInfo.secure);
   }
 

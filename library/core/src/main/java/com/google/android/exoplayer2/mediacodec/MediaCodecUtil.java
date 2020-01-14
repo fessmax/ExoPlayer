@@ -92,19 +92,21 @@ public final class MediaCodecUtil {
   // Lazily initialized.
   private static int maxH264DecodableFrameSize = -1;
 
-  private MediaCodecUtil() {}
+  private MediaCodecUtil() {
+  }
 
   /**
    * Optional call to warm the codec cache for a given mime type.
    *
-   * <p>Calling this method may speed up subsequent calls to {@link #getDecoderInfo(String, boolean,
+   * <p>Calling this method may speed up subsequent calls to {@link #getDecoderInfo(String,
+   * boolean,
    * boolean)} and {@link #getDecoderInfos(String, boolean, boolean)}.
    *
    * @param mimeType The mime type.
    * @param secure Whether the decoder is required to support secure decryption. Always pass false
-   *     unless secure decryption really is required.
+   * unless secure decryption really is required.
    * @param tunneling Whether the decoder is required to support tunneling. Always pass false unless
-   *     tunneling really is required.
+   * tunneling really is required.
    */
   public static void warmDecoderInfoCache(String mimeType, boolean secure, boolean tunneling) {
     try {
@@ -134,9 +136,9 @@ public final class MediaCodecUtil {
    *
    * @param mimeType The MIME type.
    * @param secure Whether the decoder is required to support secure decryption. Always pass false
-   *     unless secure decryption really is required.
+   * unless secure decryption really is required.
    * @param tunneling Whether the decoder is required to support tunneling. Always pass false unless
-   *     tunneling really is required.
+   * tunneling really is required.
    * @return A {@link MediaCodecInfo} describing the decoder, or null if no suitable decoder exists.
    * @throws DecoderQueryException If there was an error querying the available decoders.
    */
@@ -153,11 +155,11 @@ public final class MediaCodecUtil {
    *
    * @param mimeType The MIME type.
    * @param secure Whether the decoder is required to support secure decryption. Always pass false
-   *     unless secure decryption really is required.
+   * unless secure decryption really is required.
    * @param tunneling Whether the decoder is required to support tunneling. Always pass false unless
-   *     tunneling really is required.
+   * tunneling really is required.
    * @return An unmodifiable list of all {@link MediaCodecInfo}s for the given mime type, in the
-   *     order given by {@link MediaCodecList}.
+   * order given by {@link MediaCodecList}.
    * @throws DecoderQueryException If there was an error querying the available decoders.
    */
   public static synchronized List<MediaCodecInfo> getDecoderInfos(
@@ -208,6 +210,26 @@ public final class MediaCodecUtil {
     return decoderInfos;
   }
 
+  public static CodecProfileLevel[] getProfileLevels() throws DecoderQueryException {
+    MediaCodecInfo decoderInfo = getDecoderInfo(MimeTypes.VIDEO_H264, false, false);
+    if (decoderInfo != null) {
+      CodecProfileLevel[] profiles = decoderInfo.getProfileLevels();
+      if (profiles == null || profiles.length == 0) {
+        if ("OMX.amlogic.avc.decoder.awesome".equals(decoderInfo.name)) {
+          CodecProfileLevel profile = new CodecProfileLevel();
+          profile.level = CodecProfileLevel.AVCLevel31;
+          return new CodecProfileLevel[]{profile};
+        } else {
+          return new CodecProfileLevel[0];
+        }
+      } else {
+        return profiles;
+      }
+    } else {
+      return new CodecProfileLevel[0];
+    }
+  }
+
   /**
    * Returns the maximum frame size supported by the default H264 decoder.
    *
@@ -220,7 +242,7 @@ public final class MediaCodecUtil {
       MediaCodecInfo decoderInfo =
           getDecoderInfo(MimeTypes.VIDEO_H264, /* secure= */ false, /* tunneling= */ false);
       if (decoderInfo != null) {
-        for (CodecProfileLevel profileLevel : decoderInfo.getProfileLevels()) {
+        for (CodecProfileLevel profileLevel : getProfileLevels()) {
           result = Math.max(avcLevelToMaxFrameSize(profileLevel.level), result);
         }
         // We assume support for at least 480p (SDK_INT >= 21) or 360p (SDK_INT < 21), which are
@@ -238,7 +260,7 @@ public final class MediaCodecUtil {
    *
    * @param format Media format with a codec description string, as defined by RFC 6381.
    * @return A pair (profile constant, level constant) if the codec of the {@code format} is
-   *     well-formed and recognized, or null otherwise.
+   * well-formed and recognized, or null otherwise.
    */
   @Nullable
   public static Pair<Integer, Integer> getCodecProfileAndLevel(Format format) {
@@ -376,8 +398,8 @@ public final class MediaCodecUtil {
    * @param secureDecodersExplicit Whether secure decoders were explicitly listed, if present.
    * @param mimeType The MIME type.
    * @return The codec's supported MIME type for media of type {@code mimeType}, or {@code null} if
-   *     the codec can't be used. If non-null, the returned type will be equal to {@code mimeType}
-   *     except in cases where the codec is known to use a non-standard MIME type alias.
+   * the codec can't be used. If non-null, the returned type will be equal to {@code mimeType}
+   * except in cases where the codec is known to use a non-standard MIME type alias.
    */
   @Nullable
   private static String getCodecMimeType(
@@ -435,11 +457,11 @@ public final class MediaCodecUtil {
     // Work around broken audio decoders.
     if (Util.SDK_INT < 21
         && ("CIPAACDecoder".equals(name)
-            || "CIPMP3Decoder".equals(name)
-            || "CIPVorbisDecoder".equals(name)
-            || "CIPAMRNBDecoder".equals(name)
-            || "AACDecoder".equals(name)
-            || "MP3Decoder".equals(name))) {
+        || "CIPMP3Decoder".equals(name)
+        || "CIPVorbisDecoder".equals(name)
+        || "CIPAMRNBDecoder".equals(name)
+        || "AACDecoder".equals(name)
+        || "MP3Decoder".equals(name))) {
       return false;
     }
 
@@ -448,7 +470,7 @@ public final class MediaCodecUtil {
     if (Util.SDK_INT < 18
         && "OMX.MTK.AUDIO.DECODER.AAC".equals(name)
         && ("a70".equals(Util.DEVICE)
-            || ("Xiaomi".equals(Util.MANUFACTURER) && Util.DEVICE.startsWith("HM")))) {
+        || ("Xiaomi".equals(Util.MANUFACTURER) && Util.DEVICE.startsWith("HM")))) {
       return false;
     }
 
@@ -457,17 +479,17 @@ public final class MediaCodecUtil {
     if (Util.SDK_INT == 16
         && "OMX.qcom.audio.decoder.mp3".equals(name)
         && ("dlxu".equals(Util.DEVICE) // HTC Butterfly
-            || "protou".equals(Util.DEVICE) // HTC Desire X
-            || "ville".equals(Util.DEVICE) // HTC One S
-            || "villeplus".equals(Util.DEVICE)
-            || "villec2".equals(Util.DEVICE)
-            || Util.DEVICE.startsWith("gee") // LGE Optimus G
-            || "C6602".equals(Util.DEVICE) // Sony Xperia Z
-            || "C6603".equals(Util.DEVICE)
-            || "C6606".equals(Util.DEVICE)
-            || "C6616".equals(Util.DEVICE)
-            || "L36h".equals(Util.DEVICE)
-            || "SO-02E".equals(Util.DEVICE))) {
+        || "protou".equals(Util.DEVICE) // HTC Desire X
+        || "ville".equals(Util.DEVICE) // HTC One S
+        || "villeplus".equals(Util.DEVICE)
+        || "villec2".equals(Util.DEVICE)
+        || Util.DEVICE.startsWith("gee") // LGE Optimus G
+        || "C6602".equals(Util.DEVICE) // Sony Xperia Z
+        || "C6603".equals(Util.DEVICE)
+        || "C6606".equals(Util.DEVICE)
+        || "C6616".equals(Util.DEVICE)
+        || "L36h".equals(Util.DEVICE)
+        || "SO-02E".equals(Util.DEVICE))) {
       return false;
     }
 
@@ -475,9 +497,9 @@ public final class MediaCodecUtil {
     if (Util.SDK_INT == 16
         && "OMX.qcom.audio.decoder.aac".equals(name)
         && ("C1504".equals(Util.DEVICE) // Sony Xperia E
-            || "C1505".equals(Util.DEVICE)
-            || "C1604".equals(Util.DEVICE) // Sony Xperia E dual
-            || "C1605".equals(Util.DEVICE))) {
+        || "C1505".equals(Util.DEVICE)
+        || "C1604".equals(Util.DEVICE) // Sony Xperia E dual
+        || "C1605".equals(Util.DEVICE))) {
       return false;
     }
 
@@ -486,13 +508,13 @@ public final class MediaCodecUtil {
         && ("OMX.SEC.aac.dec".equals(name) || "OMX.Exynos.AAC.Decoder".equals(name))
         && "samsung".equals(Util.MANUFACTURER)
         && (Util.DEVICE.startsWith("zeroflte") // Galaxy S6
-            || Util.DEVICE.startsWith("zerolte") // Galaxy S6 Edge
-            || Util.DEVICE.startsWith("zenlte") // Galaxy S6 Edge+
-            || "SC-05G".equals(Util.DEVICE) // Galaxy S6
-            || "marinelteatt".equals(Util.DEVICE) // Galaxy S6 Active
-            || "404SC".equals(Util.DEVICE) // Galaxy S6 Edge
-            || "SC-04G".equals(Util.DEVICE)
-            || "SCV31".equals(Util.DEVICE))) {
+        || Util.DEVICE.startsWith("zerolte") // Galaxy S6 Edge
+        || Util.DEVICE.startsWith("zenlte") // Galaxy S6 Edge+
+        || "SC-05G".equals(Util.DEVICE) // Galaxy S6
+        || "marinelteatt".equals(Util.DEVICE) // Galaxy S6 Active
+        || "404SC".equals(Util.DEVICE) // Galaxy S6 Edge
+        || "SC-04G".equals(Util.DEVICE)
+        || "SCV31".equals(Util.DEVICE))) {
       return false;
     }
 
@@ -502,10 +524,10 @@ public final class MediaCodecUtil {
         && "OMX.SEC.vp8.dec".equals(name)
         && "samsung".equals(Util.MANUFACTURER)
         && (Util.DEVICE.startsWith("d2")
-            || Util.DEVICE.startsWith("serrano")
-            || Util.DEVICE.startsWith("jflte")
-            || Util.DEVICE.startsWith("santos")
-            || Util.DEVICE.startsWith("t0"))) {
+        || Util.DEVICE.startsWith("serrano")
+        || Util.DEVICE.startsWith("jflte")
+        || Util.DEVICE.startsWith("santos")
+        || Util.DEVICE.startsWith("t0"))) {
       return false;
     }
 
@@ -819,8 +841,8 @@ public final class MediaCodecUtil {
       profile = CodecProfileLevel.AV1ProfileMain8;
     } else if (colorInfo != null
         && (colorInfo.hdrStaticInfo != null
-            || colorInfo.colorTransfer == C.COLOR_TRANSFER_HLG
-            || colorInfo.colorTransfer == C.COLOR_TRANSFER_ST2084)) {
+        || colorInfo.colorTransfer == C.COLOR_TRANSFER_HLG
+        || colorInfo.colorTransfer == C.COLOR_TRANSFER_ST2084)) {
       profile = CodecProfileLevel.AV1ProfileMain10HDR10;
     } else {
       profile = CodecProfileLevel.AV1ProfileMain10;
@@ -838,8 +860,8 @@ public final class MediaCodecUtil {
    * Conversion values taken from ISO 14496-10 Table A-1.
    *
    * @param avcLevel one of CodecProfileLevel.AVCLevel* constants.
-   * @return maximum frame size that can be decoded by a decoder with the specified avc level
-   *     (or {@code -1} if the level is not recognized)
+   * @return maximum frame size that can be decoded by a decoder with the specified avc level (or
+   * {@code -1} if the level is not recognized)
    */
   private static int avcLevelToMaxFrameSize(int avcLevel) {
     switch (avcLevel) {
@@ -899,14 +921,21 @@ public final class MediaCodecUtil {
     return null;
   }
 
-  /** Stably sorts the provided {@code list} in-place, in order of decreasing score. */
+  /**
+   * Stably sorts the provided {@code list} in-place, in order of decreasing score.
+   */
   private static <T> void sortByScore(List<T> list, ScoreProvider<T> scoreProvider) {
     Collections.sort(list, (a, b) -> scoreProvider.getScore(b) - scoreProvider.getScore(a));
   }
 
-  /** Interface for providers of item scores. */
+  /**
+   * Interface for providers of item scores.
+   */
   private interface ScoreProvider<T> {
-    /** Returns the score of the provided item. */
+
+    /**
+     * Returns the score of the provided item.
+     */
     int getScore(T t);
   }
 
@@ -929,10 +958,14 @@ public final class MediaCodecUtil {
      */
     boolean secureDecodersExplicit();
 
-    /** Whether the specified {@link CodecCapabilities} {@code feature} is supported. */
+    /**
+     * Whether the specified {@link CodecCapabilities} {@code feature} is supported.
+     */
     boolean isFeatureSupported(String feature, String mimeType, CodecCapabilities capabilities);
 
-    /** Whether the specified {@link CodecCapabilities} {@code feature} is required. */
+    /**
+     * Whether the specified {@link CodecCapabilities} {@code feature} is required.
+     */
     boolean isFeatureRequired(String feature, String mimeType, CodecCapabilities capabilities);
   }
 
@@ -941,7 +974,8 @@ public final class MediaCodecUtil {
 
     private final int codecKind;
 
-    @Nullable private android.media.MediaCodecInfo[] mediaCodecInfos;
+    @Nullable
+    private android.media.MediaCodecInfo[] mediaCodecInfos;
 
     // the constructor does not initialize fields: mediaCodecInfos
     @SuppressWarnings("nullness:initialization.fields.uninitialized")

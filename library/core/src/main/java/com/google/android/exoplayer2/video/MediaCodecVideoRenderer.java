@@ -767,6 +767,15 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
   @CallSuper
   @Override
   protected void onQueueInputBuffer(DecoderInputBuffer buffer) {
+    if (buffer.data.get(0) == 0 && buffer.data.get(1) == 0 && buffer.data.get(2) == 1) {
+      int n = buffer.data.limit();
+      byte[] temp = new byte[n + 1];
+      temp[0] = 0;
+      buffer.data.get(temp, 1, n);
+      buffer.data.clear();
+      buffer.data.put(temp);
+      buffer.data.flip();
+    }
     buffersInCodecCount++;
     lastInputTimeUs = Math.max(buffer.timeUs, lastInputTimeUs);
     if (Util.SDK_INT < 23 && tunneling) {
